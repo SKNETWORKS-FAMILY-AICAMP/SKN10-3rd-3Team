@@ -10,8 +10,8 @@ from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_community.tools import TavilySearchResults
 from langchain.schema import Document
 from langchain_core.messages import HumanMessage
+from sentence_transformers import CrossEncoder
 
-# Load .env
 load_dotenv()
 
 # API Keys
@@ -30,7 +30,10 @@ summary_prompt = ChatPromptTemplate.from_messages([
     ("system", "당신은 친절한 한국어 요약 도우미입니다. 사용자가 제공한 웹 검색 결과를 바탕으로 핵심만 정리해서 답변하세요."),
     ("human", "다음은 검색 결과입니다. {search_content}.다음은 요청사항입니다.{target}이를 바탕으로 요청사항과 관련된 결과만 가지고 자연스럽고 간결하게 요약해 주세요:\n\n")
 ])
-
+cross_encoder = CrossEncoder(
+    "Dongjin-kr/ko-reranker", max_length = 512, device="cpu"
+)
+# Load .env
 def summarize_search(user_input: str) -> str:
     search_results = tavily_tool.invoke(user_input)
     if not search_results or not isinstance(search_results, list):
@@ -68,7 +71,7 @@ async def start():
 
         embedding = OpenAIEmbeddings()
         vectorstore = FAISS.from_documents(split_docs, embedding=embedding)
-        retriever = vectorstore.as_retriever()
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 6})
 
         rag_prompt = PromptTemplate.from_template("""
 당신은 질문-답변(Question-Answering)을 수행하는 친절한 AI 어시스턴트입니다. 
@@ -108,7 +111,22 @@ async def handle_message(message: cl.Message):
         return
 
     internal_result = retriever.invoke(user_input)
-    context = "\n".join([doc.page_content for doc in internal_result]) if internal_result else ""
+    print(type(internal_result[0]))
+    print(type(internal_result[0].page_content))
+    texts = [doc.page_content for doc in internal_result]
+    reranked_docs = cross_encoder.rank(
+    message.content, # 사용자 질의
+    [doc.page_content for doc in internal_result], # Retriever의 결과값
+    top_k=3,
+    return_documents=True,
+    )
+    print("=======================")
+    print((reranked_docs[0]))
+    print("===========")
+    print((reranked_docs[1]))
+    print("===========")
+    print((reranked_docs[2]))
+    context = "\n".join([doc['text'] for doc in reranked_docs]) if reranked_docs else ""
 
     answer = None
     if context:
