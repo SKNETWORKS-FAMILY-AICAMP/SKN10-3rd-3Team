@@ -1,0 +1,10 @@
+chainlit
+langchain
+langchain-community
+langchain-openai
+faiss-cpu
+openai
+tiktoken
+pandas
+tavily-python
+python-dotenv
