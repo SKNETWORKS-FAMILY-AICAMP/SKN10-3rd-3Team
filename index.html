@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>데이터셋 선택</title>
+  <style>
+    body { font-family: sans-serif; padding: 30px; }
+    .dataset-btn {
+      display: inline-block;
+      width: 200px;
+      margin: 10px;
+      text-align: center;
+      text-decoration: none;
+      color: black;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: white;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+      cursor: pointer;
+    }
+
+    .dataset-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .img-placeholder {
+      width: 100%;
+      height: 150px;
+      overflow: hidden;
+    }
+
+    .img-placeholder img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .dataset-btn span {
+      display: block;
+      padding: 10px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+  </style>
+  <script>
+    function selectDataset(datasetName) {
+      const encoded = encodeURIComponent(datasetName); // 한글 대응!
+      const url = `http://localhost:8000?dataset=${encoded}`;
+      window.open(url, "_blank");
+      console.log("🔥 선택한 dataset:", datasetName);
+      console.log(`🔥 열리는 URL: http://localhost:8000?dataset=${datasetName}`);
+    }
+  </script>
+</head>
+<body>
+
+  <h1>🧠 사용하고 싶은 데이터셋을 선택하세요!</h1>
+
+  <div onclick="selectDataset('중증외상센터_등장인물')" class="dataset-btn">
+    <div class="img-placeholder">
+      <img src="image/중증외상센터.png" alt="중증외상센터 이미지" />
+    </div>
+    <span>중증외상센터 등장인물</span>
+  </div>
+
+  <div onclick="selectDataset('폭싹_속았수다_등장인물')" class="dataset-btn">
+    <div class="img-placeholder">
+      <img src="image/폭싹 속았수다.png" alt="폭싹 속았수다 이미지" />
+    </div>
+    <span>폭싹 속았수다 등장인물</span>
+  </div>
+
+  <div onclick="selectDataset('선의의경쟁_등장인물')" class="dataset-btn">
+    <div class="img-placeholder">
+      <img src="image/선의의경쟁.png" alt="선의의경쟁 이미지" />
+    </div>
+    <span>선의의 경쟁 등장인물</span>
+  </div>
+
+  <div onclick="selectDataset('악연_등장인물')" class="dataset-btn">
+    <div class="img-placeholder">
+      <img src="image/악연.png" alt="악연 이미지" />
+    </div>
+    <span>악연 등장인물</span>
+  </div>
+
+  <div onclick="selectDataset('kinolights_ranking_data')" class="dataset-btn">
+    <div class="img-placeholder">
+      <img src="image/kinolights.png" alt="kinolights 이미지" />
+    </div>
+    <span>Kinolight 랭킹</span>
+  </div>
+
+  <div onclick="selectDataset('3월이후드라마영화')" class="dataset-btn">
+    <div class="img-placeholder">
+      <img src="image/상영예정작.png" alt="상영예정작 이미지" />
+    </div>
+    <span>개봉예정 드라마 영화</span>
+  </div>
+
+  <div onclick="selectDataset('naver_entertainment_articles')" class="dataset-btn">
+    <div class="img-placeholder">
+      <img src="image/네이버엔터.png" alt="네이버엔터 이미지" />
+    </div>
+    <span>최근 네이버 ENT 뉴스</span>
+  </div>
+
+</body>
+</html>
+
+<!-- http://localhost:8001/index.html html 시작버튼 -->
