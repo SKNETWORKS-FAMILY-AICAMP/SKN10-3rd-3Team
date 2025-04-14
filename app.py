@@ -28,7 +28,7 @@ tavily_tool = TavilySearchResults(
 )
 summary_prompt = ChatPromptTemplate.from_messages([
     ("system", "당신은 친절한 한국어 요약 도우미입니다. 사용자가 제공한 웹 검색 결과를 바탕으로 핵심만 정리해서 답변하세요."),
-    ("human", "다음은 검색 결과입니다. 이를 바탕으로 자연스럽고 간결하게 요약해 주세요:\n\n{search_content}")
+    ("human", "다음은 검색 결과입니다. {search_content}.다음은 요청사항입니다.{target}이를 바탕으로 요청사항과 관련된 결과만 가지고 자연스럽고 간결하게 요약해 주세요:\n\n")
 ])
 
 def summarize_search(user_input: str) -> str:
@@ -36,7 +36,7 @@ def summarize_search(user_input: str) -> str:
     if not search_results or not isinstance(search_results, list):
         return "검색 결과가 없습니다."
     all_content = "\n\n".join([item.get("content", "") for item in search_results])
-    prompt_text = summary_prompt.format(search_content=all_content)
+    prompt_text = summary_prompt.format(search_content=all_content,target=user_input)
     response = llm.invoke([HumanMessage(content=prompt_text)])
     return response.content.strip()
 
@@ -45,7 +45,7 @@ async def start():
     try:
         DATA_PATH = "./data/"
         loader = CSVLoader(
-            file_path=DATA_PATH + "폭싹 속았수다 등장인물.csv",
+            file_path=DATA_PATH + "중증외상센터 등장인물.csv",
             encoding="utf-8",
             metadata_columns=["character_name", "actor_name"]
         )
