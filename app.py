@@ -15,6 +15,7 @@ from langchain_core.messages import HumanMessage
 from urllib.parse import unquote, parse_qs
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import Request
 
 # Load .env
 load_dotenv()
@@ -24,6 +25,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
 dataset_memory = {}
+ip_to_dataset = {}
 
 # 전역 객체들 선언 (start 함수 밖으로 뺌)
 llm = ChatOpenAI(model_name="gpt-4o-mini")
@@ -220,14 +222,13 @@ def process_docs(file_path: str) -> tuple[list[Document], PromptTemplate]:
 
     return docs, prompt
 
+
 @cl.on_chat_start
 async def start():
     try:
-        import socket
-        hostname = socket.gethostname()
-        ip = socket.gethostbyname(hostname)
+        ip = next(iter(ip_to_dataset.keys()), "127.0.0.1")  # 기본값도 안전하게
+        dataset_name = ip_to_dataset.get(ip, "중증외상센터_등장인물")
 
-        dataset_name = dataset_memory.get(ip, "중증외상센터_등장인물")
         cl.user_session.set("dataset_name", dataset_name)
         print(f"📦 [Chainlit] {ip} → {dataset_name} 로드 완료")
 
@@ -305,23 +306,14 @@ def _contains_not_found_phrase(text: str) -> bool:
 from chainlit.server import app as chainlit_app
 
 # 미들웨어: request.query_string 저장
-class SaveQueryStringMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        query_string = request.scope.get("query_string", b"").decode()
-        dataset = None
-        if "dataset=" in query_string:
-            dataset = unquote(query_string.split("dataset=")[-1].split("&")[0])
-        if dataset:
-            request.scope["dataset_name"] = dataset
+@chainlit_app.middleware("http")
+async def dataset_selector_middleware(request: Request, call_next):
+    ip = request.client.host
+    dataset = request.query_params.get("dataset")
+    if dataset:
+        print(f"💾 [미들웨어] {ip} → {dataset} 저장 완료")
+        ip_to_dataset[ip] = dataset
+    response = await call_next(request)
+    return response
 
-            # 🔥 여기서 전역 dict에 저장 (IP 기준 or 랜덤 ID 기준으로)
-            from starlette.middleware.base import RequestResponseEndpoint
-            client_ip = request.client.host
-            dataset_memory[client_ip] = dataset
-            print(f"💾 [미들웨어] {client_ip} → {dataset} 저장 완료")
 
-        response = await call_next(request)
-        return response
-
-# FastAPI에 미들웨어 등록
-chainlit_app.add_middleware(SaveQueryStringMiddleware)
